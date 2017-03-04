@@ -71,7 +71,7 @@ Promise.all([
     // start the server
     console.log("all sensors started")
     config.sensors = {
-        sensorsmap:sensorsmap,
+        sensorsmap:sensorsmap
         // ambientsensor: ambientsensor,
         // humiditysensor:humiditysensor,
         // soundintensitysensor:soundintensitysensor,
@@ -129,5 +129,3 @@ Promise.all([
         //console.log("server started " + worker.process.title)
     };
 })
-
-

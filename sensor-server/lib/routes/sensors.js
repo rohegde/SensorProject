@@ -6,19 +6,19 @@ const http = require("http");
 const WebSocket = require('ws');
 //const server =require("./lib/DefaultApp").server;
 
-const wss = new WebSocket.Server({
-    port: 8080
-});
-
-
-wss.broadcast = function broadcast(data) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            // console.log(data);
-            client.send(JSON.stringify(data));
-        }
-    })
-};
+// const wss = new WebSocket.Server({
+//     port: 8080
+// });
+//
+//
+// wss.broadcast = function broadcast(data) {
+//     wss.clients.forEach(function each(client) {
+//         if (client.readyState === WebSocket.OPEN) {
+//             // console.log(data);
+//             client.send(JSON.stringify(data));
+//         }
+//     })
+// };
 
 
 module.exports = class Sensors
