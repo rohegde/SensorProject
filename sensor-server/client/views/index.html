@@ -1,11 +1,316 @@
 <% include include/header.html %>
-
-<div class="jumbotron">
-    <h2><%= pkg.name %></h2>
-    <p>This is just an example <a href="http://expressjs.com/">Express.js</a> web
-        application skeleton targeted to demonstrate some of the facilities offered by the
-        framework. Additionally, it is integrated with a barebones version of
-        <a href="http://getbootstrap.com/">Bootstrap</a>.</p>
+<div id="sensorsContainer">
+    <!-- If Needed Left and Right Padding in 'md' and 'lg' screen means use container class -->
+</div>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h4>Log</h4>
+    </div>
+    <div class="panel-body" id="output" style="height:200px;overflow-y:scroll"></div>
 </div>
 
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {
+        'packages': ['corechart', 'gauge']
+    });
+    google.charts.setOnLoadCallback(init);
+
+
+    let dataMap = new Map();
+    let divMap = new Map();
+    let lineDataMap = new Map();
+    let gaugeDataMap = new Map();
+    let lineChartMap = new Map();
+    let gaugeChartMap = new Map();
+    let lockMap = new Map();
+
+    let options_line = {
+        legend: 'none',
+        hAxis: {
+            title: 'Time',
+            maxValue: 0,
+            minValue: -20,
+            viewWindowMode: 'explicit',
+            gridlines: { count: 10 },
+            viewWindow: {
+                min: -20,
+                max: 0
+            },
+
+            ticks: [{ v: 0, f: 'Now' },
+                { v: -5, f: '5' },
+                { v: -10, f: '10 seconds ago' },
+                { v: -15, f: '15' },
+                { v: -20, f: '20 seconds ago' }]
+
+        },
+        // {
+        //     "position": "top",
+        //     "textStyle": {
+        //         "color": "red",
+        //         "fontSize": "16"
+        //     }
+        // },
+        // width: 400,
+        height: 200
+        // , animation: { duration: 250, startup: true }
+    };
+
+    var options_gauge = {
+        yih: {
+            redFrom: 70,
+            redTo: 100,
+            yellowFrom: 40,
+            yellowTo: 70,
+            greenFrom: 0,
+            greenTo: 40,
+            minorTicks: 5,
+            min: 0,
+            max: 100
+        },
+        vqY: {
+            redFrom: 70,
+            redTo: 100,
+            yellowFrom: 40,
+            yellowTo: 70,
+            greenFrom: 0,
+            greenTo: 40,
+            minorTicks: 5,
+            min: 0,
+            max: 100
+        },
+        xDM: {
+            redFrom: 70,
+            redTo: 100,
+            yellowFrom: 40,
+            yellowTo: 70,
+            greenFrom: 0,
+            greenTo: 40,
+            minorTicks: 5,
+            min: 0,
+            max: 100
+        },
+        tkw: {
+            redFrom: 70,
+            redTo: 100,
+            yellowFrom: 40,
+            yellowTo: 70,
+            greenFrom: 0,
+            greenTo: 40,
+            minorTicks: 5,
+            min: 0,
+            max: 100
+        },
+        androidXYZ: {
+            redFrom: -1, redTo: 1, redColor: '#00FF00',
+            greenFrom: -5, greenTo: 5, greenColor: '#FF0000',
+            yellowFrom: -2.5, yellowTo: 2.5,
+            minorTicks: 5,
+            min: -5,
+            max: 5
+        }
+    };
+
+
+    function initSensor(sensorResponse) {
+        //console.log(sensorResponse);
+        let _id = sensorResponse.UID;
+        let _type = sensorResponse.type;
+
+        //init data series
+        if (dataMap.get(_id) == undefined)
+            dataMap.set(_id, []);
+
+        let gaugeID = "sensor_" + _id + "_gauge";
+        let historyID = "sensor_" + _id + "_history";
+
+        // inject div for chart
+        var t = document.querySelector('#sensorTemplate');
+        var clone = document.importNode(t.content, true);
+        // Populate the src at runtime.
+        clone.querySelector('#sensor_i_gauge').id = gaugeID;
+        clone.querySelector('#sensorName').textContent = _type;
+        clone.querySelector('#sensorID').textContent = sensorResponse.id;
+        clone.querySelector('#sensor_x_history').id = historyID;
+        document.querySelector('#sensorsContainer').appendChild(clone);
+
+        // prepare data
+        let label = undefined;
+        let label_unit = sensorResponse.unit;
+        switch (sensorResponse.type) {
+            case 'Temperature Sensor':
+                label = "Temperature";
+                break;
+            case 'Ambient Sensor':
+                label = "Light";
+                break;
+            case 'Humidity Sensor':
+                label = "Humidity";
+                break;
+            case 'Sound Intensity Sensor':
+                label = "Sound";
+                break;
+            case 'Accelerometer Sensor':
+                label = "Accelerometer";
+                break;
+            case 'Accelerometer':
+                label = "x-inertia";
+                break;
+            default:
+                label = "Unknown ";
+        }
+
+        let data_gauge = google.visualization.arrayToDataTable([
+            ['Label', 'Value'],
+            [label, 80],
+        ]);
+        lockMap.set(_id, true);
+
+        let data_line = new google.visualization.DataTable();
+        data_line.addColumn('datetime', 'Timestamp');
+        data_line.addColumn('number', label_unit);
+        let linechart = new google.visualization.LineChart(document.getElementById(historyID));
+        linechart.draw(data_line, options_line);
+
+        let gaugechart = new google.visualization.Gauge(document.getElementById(gaugeID));
+
+        gaugeDataMap.set(_id, data_gauge)
+        lineDataMap.set(_id, data_line);
+        gaugeChartMap.set(_id, gaugechart)
+        lineChartMap.set(_id, linechart);
+
+        google.visualization.events.addListener(gaugechart, 'error', errorHandler);
+        google.visualization.events.addListener(linechart, 'error', errorHandler);
+        google.visualization.events.addListener(linechart, 'ready', () => lockMap.set(_id, true));
+
+
+        gaugechart.draw(data_line, options_gauge[_id]);
+
+    }
+
+
+    var wsUri = "ws://localhost:8888";
+    console.log(wsUri);
+    var output;
+    var num_sensors = 0;
+    var websocket;
+
+    function init() {
+        output = document.getElementById("output");
+        console.log("inside ws received");
+        initWebSocket();
+
+    }
+
+    function errorHandler(error) {
+        console.log(JSON.stringify(error));
+        google.visualization.errors.removeError(error.UID);
+        // console.log("ERROR: " + error.message + " :: " + error.detailedMessage + " :: " + JSON.stringify(error.options))
+        google.visualization.errors.addError(output, error.message, error.detailedMessage, error.options);
+    }
+
+    function updateChart(data) {
+        gaugeDataMap.get(data.UID).setValue(0, 1, data.reading);
+        // lineDataMap.get(data.id).addRows([
+        //     [new Date(data.timestamp), data.reading]
+        // ]);
+
+        dataMap.get(data.UID).push([new Date(data.timestamp), data.reading]);
+
+        // let data_line = new google.visualization.DataTable();
+        // data_line.addColumn('datetime', 'Timestamp');
+        // data_line.addColumn('number', label_unit);
+
+
+
+
+        if (lockMap.get(data.UID)) {//check if the chart is ready
+            let now = new Date();
+            let newData = dataMap.get(data.UID).
+                filter(i => (now - i[0]) < 20000).
+            map(i => [-1 * (now - i[0]) / 1000, i[1]]);
+            // newData.unshift(["Timestamp", "Units"]);
+
+            let data1 = new google.visualization.DataTable();
+            data1.addColumn('number', 'Seconds ago');
+            data1.addColumn('number', data.unit);
+            data1.addRows(newData);
+
+            var formatter = new google.visualization.NumberFormat({ suffix: ' secs' });
+            var unitFormatter = new google.visualization.NumberFormat({ suffix: data.unit });
+            formatter.format(data1, 0); // Apply formatter to first column
+            unitFormatter.format(data1, 1); // Apply formatter to second column
+
+            options_line.vAxis = { title: data.unit };
+
+            let g_chart = gaugeChartMap.get(data.UID);
+            let l_chart = lineChartMap.get(data.UID);
+            g_chart.draw(gaugeDataMap.get(data.UID), options_gauge[data.UID]);
+            l_chart.draw(data1, options_line);
+        }
+    }
+
+    function initWebSocket() {
+
+        console.log("inside initWebsocket");
+        websocket = new WebSocket("ws://localhost:8888");
+        console.log("websocket created");
+        websocket.onopen = function (evt) {
+            onOpen(evt)
+        };
+        websocket.onclose = function (evt) {
+            onClose(evt)
+        };
+        websocket.onmessage = function (evt) {
+            onMessage(evt)
+        };
+        websocket.onerror = function (evt) {
+            onError(evt)
+        };
+    }
+
+    function onOpen(evt) {
+        writeToScreen("CONNECTED");
+        doSend("WebSocket rocks");
+    }
+
+    function onClose(evt) {
+        writeToScreen("DISCONNECTED");
+    }
+
+    function onMessage(evt) {
+        console.log("inside Message received");
+        dataRec = evt.data;
+        dataRec_parsed = JSON.parse(evt.data);
+        if (dataMap.get(dataRec_parsed.UID) == undefined) {
+            // dataMap.set(dataRec.id, []);
+            console.log("Not found! ");
+            initSensor(dataRec_parsed);
+        }
+
+        updateChart(dataRec_parsed);
+        writeToScreen(dataRec);
+    }
+
+    function onError(evt) {
+        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+    }
+
+    function doSend(message) {
+        writeToScreen("SENT: " + message);
+        websocket.send(message);
+    }
+
+    function writeToScreen(message) {
+        var pre = document.createElement("code");
+        let output = document.getElementById("output")
+        pre.style.wordWrap = "break-word";
+        pre.innerHTML = "<br/>" + message;
+        output.appendChild(pre);
+        output.scrollTop = output.scrollHeight;
+    }
+
+    // window.addEventListener("load", init, false);
+</script>
 <% include include/footer.html %>

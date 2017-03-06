@@ -16,36 +16,107 @@ const soundIntensitySensor = require("dummy-sensor").SoundIntensitySensor;
 const tempratureSensor = require("dummy-sensor").TempratureSensor;
 
 let ambientsensor = new ambientLightSensor({
-        frequency: 2000,
-        name: "AmbientLightSensor"
+    frequency: 2000,
+    UID: "yih",
+    type: "Ambient Sensor",
+    name: "AmbientLight Sensor",
+    unit: "lux"
 });
-ambientsensor.onchange = event => ambientsensor.reading = event.reading;
+ambientsensor.onchange = event => {
+    ambientsensor.reading = event.reading;
+    ambientsensor.lastReading = event;
+}
+
+// ambientsensor.onchange = event => {
+//     let sensorResponse = {
+//         id: ambientsensor.id,
+//         type: ambientLightSensor.type,
+//         reading: event.value,
+//         timestamp: event.timestamp,
+//         unit: ambientLightSensor.unit
+//     };
+//
+//     wss.broadcast(sensorResponse);
+//     ambientsensor.lastReading = event;
+// }
 
 let humiditysensor = new humiditySensor({
     frequency: 2000,
-    name: "HumiditySensor"
+    UID: "xDM",
+    type: "Humidity Sensor",
+    name: "Humidity Sensor",
+    unit: "%"
 });
-humiditysensor.onchange = event => humiditysensor.reading = event.reading;
+// humiditysensor.onchange = event => {
+//     let sensorResponse = {
+//     id: humiditysensor.id,
+//     type:humiditysensor.type,
+//     reading: event.value,
+//     timestamp: event.timestamp,
+//     unit:humiditysensor.unit
+// };
+//
+//     wss.broadcast(sensorResponse);
+//     humiditysensor.lastReading = event;
+// }
+humiditysensor.onchange = event => {
+    humiditysensor.reading = event.reading;
+    humiditysensor.lastReading = event;
+}
 
 let soundintensitysensor = new soundIntensitySensor({
     frequency: 2000,
-    name: "SoundIntensitySensor"
+    UID: "vqY",
+    type: "Sound Intensity Sensor",
+    name: "SoundIntensity Sensor",
+    unit: "W/m^2"
 });
-soundintensitysensor.onchange = event => soundintensitysensor.reading = event.reading;
-
+soundintensitysensor.onchange = event => {
+    soundintensitysensor.reading = event.reading;
+    soundintensitysensor.lastReading = event;
+}
+// soundintensitysensor.onchange = event => {
+//     let sensorResponse = {
+//         id: soundintensitysensor.id,
+//         type:soundintensitysensor.type,
+//         reading: event.value,
+//         timestamp: event.timestamp,
+//         unit:tempraturesensor.unit
+//     };
+//
+//  wss.broadcast(sensorResponse);
+// soundintensitysensor.lastReading = event;
+// }
 
 let tempraturesensor = new tempratureSensor({
     frequency: 2000,
-    name: "TempratureSensor"
+    UID: "tkw",
+    type: "Temperature Sensor",
+    name: "Temprature Sensor",
+    unit: "°C"
 });
-tempraturesensor.onchange = event => tempraturesensor.reading = event.reading;
+tempraturesensor.onchange = event => {
+    tempraturesensor.reading = event.reading;
+    tempraturesensor.lastReading = event;
+}
+// tempraturesensor.onchange = event => {
+//     let sensorResponse = {
+//         id: tempraturesensor.id,
+//         type: tempraturesensor.type,
+//         reading: event.value,
+//         timestamp: event.timestamp,
+//         unit: tempraturesensor.unit
+//     };
+//
+//     wss.broadcast(sensorResponse);
+//     tempraturesensor.lastReading = event;
+// }
 
 let sensorsmap = new Map();
 sensorsmap.set(ambientsensor.id, ambientsensor);
 sensorsmap.set(humiditysensor.id, humiditysensor);
 sensorsmap.set(soundintensitysensor.id, soundintensitysensor);
 sensorsmap.set(tempraturesensor.id, tempraturesensor);
-
 
 
 if(config.http.secure)
@@ -67,11 +138,12 @@ Promise.all([
     soundintensitysensor.start(),
     tempraturesensor.start()
 
+
 ]).then(() => {
     // start the server
     console.log("all sensors started")
     config.sensors = {
-        sensorsmap:sensorsmap
+        sensorsmap:sensorsmap,
         // ambientsensor: ambientsensor,
         // humiditysensor:humiditysensor,
         // soundintensitysensor:soundintensitysensor,
@@ -123,6 +195,7 @@ Promise.all([
 
     function launcher(worker, pkg, config)
     {
+        //console.log("inside launcher");
         const app = new (require("./lib/DefaultApp"))(worker, pkg, config);
         worker.process.title = `${pkg.name}:${worker.id}`;
         app.start();

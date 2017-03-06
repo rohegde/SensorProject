@@ -9,6 +9,9 @@ module.exports = class SoundIntensitySensor extends Sensor {
     super(sensorOptions);
     this._intervalHandle = null;
     this.name = sensorOptions.name;
+    this.type = sensorOptions.type;
+    this.UID = sensorOptions.UID;
+    this.unit = sensorOptions.unit;
   }
 
   handleStarted() {
@@ -17,7 +20,7 @@ module.exports = class SoundIntensitySensor extends Sensor {
           () => {
               let dummySensorReading = new DummySensorReading(
                   Date.now(),
-                  Math.random()
+                  Math.floor(Math.random() * (100 - 1)) + 1
               )
               this.onchange({
                   reading: dummySensorReading

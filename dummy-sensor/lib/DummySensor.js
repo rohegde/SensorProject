@@ -8,6 +8,7 @@ module.exports = class DummySensor extends Sensor {
   constructor(sensorOptions) {
     super(sensorOptions);
     this._intervalHandle = null;
+    this._id = sensorOptions.UID;
   }
 
   handleStarted() {

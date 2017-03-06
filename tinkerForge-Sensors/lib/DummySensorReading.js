@@ -15,11 +15,17 @@ get name(){
 set name(value){
   this._name = value;
 }
+get type(){
+  return this._type;
+}
+set type(value){
+  this._type = value;
+}
 
-  get dummyValue() {
+get dummyValue() {
     return this._dummyValue;
   }
-  set dummyValue(value) {
+set dummyValue(value) {
     this._dummyValue = value;
   }
 }

@@ -129,10 +129,48 @@ module.exports = class DefaultApp
         {
             server = require("http").createServer(this.app);
         }
+
+        const WebSocket = require('ws');
+        const wss = new WebSocket.Server({
+            port: 8888
+        });
+        wss.broadcast = function broadcast(data) {
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === WebSocket.OPEN) {
+                    // console.log(data);
+                    client.send(JSON.stringify(data));
+                }
+            })
+        };
+
+        let sensors = this.app.locals.sensors.sensorsmap;
+
+        for (let [id, sensor] of sensors.entries()) {
+            sensor.onchange = event => {
+                //console.log(event);
+                let sensorResponse = {
+                    id: sensor.id,
+                    type: sensor.type,
+                    reading: event.reading.dummyValue,
+                    timestamp: event.reading.timestamp,
+                    unit: sensor.unit,
+                    UID: sensor.UID
+                };
+                wss.broadcast(sensorResponse);
+                //console.log(sensorResponse);
+                sensor.lastReading = event;
+                //console.log(sensor.lastReading);
+            }
+        }
+
+
+
         server.timeout = 10000;
         server.listen(port, ipaddress, () => {
             console.info(`${this.app.locals.pkg["name"]} [worker ${this.app.locals.worker.id}] started at ${new Date()}. IP address: ${ipaddress}, port: ${port}`);
         });
-        return server;
+
+        //return server;
     }
+    //console.log("After Default App started");
 };

@@ -12,6 +12,8 @@ module.exports = class Sensor {
     }
     this._state = null;
     this._reading = null;
+    this._lastReading = { timestamp: null, value: null };
+    this._target = null;
     this._onactivate = event => {};
     this._onchange = event => {};
     this._onerror = event => {};
@@ -21,6 +23,12 @@ module.exports = class Sensor {
   }
   get id() {
     return this._id;
+  }
+  set target(value) {
+        this._target = value;
+  }
+  get target() {
+        return this._target;
   }
   set sensorOptions(value) {
     this._sensorOptions = value;
@@ -40,11 +48,23 @@ module.exports = class Sensor {
   get reading() {
     return this._reading;
   }
+  set lastReading(value) {
+        this._lastReading = value;
+  }
+  get lastReading() {
+        return this._lastReading;
+  }
   set onactivate(value) {
     this._onactivate = value;
   }
   get onactivate() {
     return this._onactivate;
+  }
+  set unit(value) {
+        this._unit = value;
+  }
+  get unit() {
+        return this._unit;
   }
   set onchange(value) {
     this._onchange = value;
@@ -65,6 +85,7 @@ module.exports = class Sensor {
     return this.handleStarted();
   }
   stop() {
+    this.state = SensorState.IDLE;
     return this.handleStopped();
   }
 }
