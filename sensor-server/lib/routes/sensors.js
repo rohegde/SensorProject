@@ -3,25 +3,55 @@
 const uuid = require("uuid");
 const httpError = require("http-errors");
 const http = require("http");
+const phoneSensor = require("tinkerForge-sensor").PhoneSensor;
+const sensorReading = require("tinkerForge-sensor").DummySensorReading;
+const WebSocket = require('ws');
+const wss = new WebSocket.Server({
+    port: 8082
+});
+wss.broadcast = function broadcast(data) {
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            // console.log(data);
+            client.send(JSON.stringify(data));
+        }
+    })
+};
 
 
 module.exports = class Sensors
 {
-
-
     static sensors (request, response, next)
     {
+        constructor()
+        {
+            let sensors = request.app.locals.sensors.sensorsmap;
 
-        let sensorsResponse = Array
-            .from(request.app.locals.sensors.sensorsmap.keys())
-            .map(id => ({id: id}));
-        for(var id of request.app.locals.sensors.sensorsmap.keys()){
-            console.log("id"+ id);
+            for (let [id, sensor] of sensors.entries()) {
+                sensor.onchange = event => {
+                    //console.log(event);
+                    let sensorResponse = {
+                        id: sensor.id,
+                        type: sensor.type,
+                        reading: event.reading.dummyValue,
+                        timestamp: event.reading.timestamp,
+                        unit: sensor.unit,
+                        UID: sensor.UID
+                    };
+                    wss.broadcast(sensorResponse);
+                    sensor.lastReading = event;
+                }
+            }
         }
+        let sensorsResponse;
+        let sensor = request.app.locals.sensors.sensorsmap.get(request.params.sensor);
         // console.log(sensorsResponse);
         switch (request.method)
         {
             case "GET":
+                sensorsResponse = Array
+                    .from(request.app.locals.sensors.sensorsmap.keys())
+                    .map(id => ({id: id}));
               response.format(
                 {
                     "application/json": () =>
@@ -33,6 +63,39 @@ module.exports = class Sensors
                 });
                 break;
             case "POST":
+                let sensorph;
+                    sensorph = new phoneSensor(request.body);
+                    sensorph.onchange = event => {
+
+                        let sensorResponse = {
+                            id: sensorph.UID,
+                            type: sensorph.type,
+                            name: sensorph.name,
+                            reading: event.reading.dummyValue,
+                            timestamp: event.reading.timestamp,
+                            unit: sensorph.unit
+                        };
+
+                        wss.broadcast(sensorResponse);
+                        sensorph.lastReading = event;
+                    };
+                    request.app.locals.sensors.sensorsmap.set(sensorph.UID, sensorph);
+                    sensorph.start();
+                    sensorsResponse = Array.from(request.app.locals.sensors.sensorsmap.keys())
+                        .map(id => ({
+                            id: id
+                        }));
+                    console.log(sensorsResponse);
+
+                    response.format({
+                        "application/json": () => {
+                            response.status(201).send(sensorsResponse);
+                        },
+                        "default": () => {
+                            next(new httpError.NotAcceptable());
+                        }
+                    });
+                    break;
             case "CONNECT":
             case "DELETE":
             case "HEAD":
@@ -87,12 +150,6 @@ module.exports = class Sensors
     {
 
       let sensor = request.app.locals.sensors.sensorsmap.get(request.params.sensor);
-      console.log(sensor);
-      // for(var id of request.app.locals.sensors.sensorsmap.keys())
-      // console.log("id"+ id);
-      // console.log(request.params.sensor);
-      // console.log(sensor);
-      //console.log("readings", forEach(sensor));
       let sensorResponse = {
           id: sensor.id,
           reading: sensor.lastReading.reading
@@ -119,6 +176,24 @@ module.exports = class Sensors
             case "HEAD":
             case "OPTIONS":
             case "POST":
+                sensor.lastReading.reading = new sensorReading(
+                    parseInt(request.body.lastReading.timestamp),
+                    parseInt(request.body.lastReading.value));
+                sensorResponse = {
+                    value: sensor.lastReading.reading.dummyValue,
+                    timestamp: sensor.lastReading.reading.timestamp
+                };
+                console.log(sensorResponse);
+                sensor.onchange(sensor.lastReading);
+                response.format({
+                    "application/json": () => {
+                        response.status(201).send(sensorResponse);
+                    },
+                    "default": () => {
+                        next(new httpError.NotAcceptable());
+                    }
+                });
+                break;
             case "TRACE":
             default:
                 response.set("allow", "GET, POST");

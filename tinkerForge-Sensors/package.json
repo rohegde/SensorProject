@@ -1,5 +1,5 @@
 {
-  "name": "dummy-sensor",
+  "name": "tinkerForge-sensor",
   "version": "1.0.0",
   "description": "A dummy sensor implementation",
   "main": "index.js",

@@ -8,7 +8,10 @@ module.exports = class SoundIntensitySensor extends Sensor {
   constructor(sensorOptions) {
     super(sensorOptions);
     this._intervalHandle = null;
-    this._id = sensorOptions.UID;
+      this.name = sensorOptions.name;
+      this.type = sensorOptions.type;
+      this.UID = sensorOptions.UID;
+      this.unit = sensorOptions.unit;
   }
 
   handleStarted() {

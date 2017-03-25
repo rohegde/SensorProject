@@ -6,14 +6,30 @@ const path = require("path");
 const config = require(path.join(__dirname, "config", "start.json"));
 const pkg = require(path.join(__dirname, "package.json"));
 const debug = require("util").debuglog(pkg.name);
+const WebSocket = require('ws');
+// const wss = new WebSocket.Server({
+//     port: 8082
+// });
+// wss.broadcast = function broadcast(data) {
+//     wss.clients.forEach(function each(client) {
+//         if (client.readyState === WebSocket.OPEN) {
+//             // console.log(data);
+//             client.send(JSON.stringify(data));
+//         }
+//     })
+// };
 
 process.title = pkg.name;
 config.basedir = __dirname;
 
-const ambientLightSensor = require("dummy-sensor").AmbientLightSensor;
-const humiditySensor = require("dummy-sensor").HumiditySensor;
-const soundIntensitySensor = require("dummy-sensor").SoundIntensitySensor;
-const tempratureSensor = require("dummy-sensor").TempratureSensor;
+// config.webss = wss;
+
+
+const ambientLightSensor = require("tinkerForge-sensor").AmbientLightSensor;
+const humiditySensor = require("tinkerForge-sensor").HumiditySensor;
+const soundIntensitySensor = require("tinkerForge-sensor").SoundIntensitySensor;
+const tempratureSensor = require("tinkerForge-sensor").TempratureSensor;
+const dummySensorAll =  require("tinkerForge-sensor").DummySensor;
 
 let ambientsensor = new ambientLightSensor({
     frequency: 2000,
@@ -26,14 +42,13 @@ ambientsensor.onchange = event => {
     ambientsensor.reading = event.reading;
     ambientsensor.lastReading = event;
 }
-
 // ambientsensor.onchange = event => {
 //     let sensorResponse = {
 //         id: ambientsensor.id,
-//         type: ambientLightSensor.type,
+//         type: ambientsensor.type,
 //         reading: event.value,
 //         timestamp: event.timestamp,
-//         unit: ambientLightSensor.unit
+//         unit: ambientsensor.unit
 //     };
 //
 //     wss.broadcast(sensorResponse);
@@ -47,22 +62,23 @@ let humiditysensor = new humiditySensor({
     name: "Humidity Sensor",
     unit: "%"
 });
-// humiditysensor.onchange = event => {
-//     let sensorResponse = {
-//     id: humiditysensor.id,
-//     type:humiditysensor.type,
-//     reading: event.value,
-//     timestamp: event.timestamp,
-//     unit:humiditysensor.unit
-// };
-//
-//     wss.broadcast(sensorResponse);
-//     humiditysensor.lastReading = event;
-// }
+
 humiditysensor.onchange = event => {
     humiditysensor.reading = event.reading;
     humiditysensor.lastReading = event;
 }
+// humiditysensor.onchange = event => {
+//     let sensorResponse = {
+//         id: humiditysensor.id,
+//         type: humiditysensor.type,
+//         reading: event.value,
+//         timestamp: event.timestamp,
+//         unit: humiditysensor.unit
+//     };
+//
+//     wss.broadcast(sensorResponse);
+//     humiditysensor.lastReading = event;
+// }
 
 let soundintensitysensor = new soundIntensitySensor({
     frequency: 2000,
@@ -78,15 +94,16 @@ soundintensitysensor.onchange = event => {
 // soundintensitysensor.onchange = event => {
 //     let sensorResponse = {
 //         id: soundintensitysensor.id,
-//         type:soundintensitysensor.type,
+//         type: soundintensitysensor.type,
 //         reading: event.value,
 //         timestamp: event.timestamp,
-//         unit:tempraturesensor.unit
+//         unit: soundintensitysensor.unit
 //     };
 //
-//  wss.broadcast(sensorResponse);
-// soundintensitysensor.lastReading = event;
+//     wss.broadcast(sensorResponse);
+//     soundintensitysensor.lastReading = event;
 // }
+
 
 let tempraturesensor = new tempratureSensor({
     frequency: 2000,
@@ -141,21 +158,17 @@ Promise.all([
 
 ]).then(() => {
     // start the server
-    console.log("all sensors started")
+    console.log("all sensors started");
     config.sensors = {
-        sensorsmap:sensorsmap,
-        // ambientsensor: ambientsensor,
-        // humiditysensor:humiditysensor,
-        // soundintensitysensor:soundintensitysensor,
-        // tempraturesensor:tempraturesensor
+        sensorsmap:sensorsmap
     };
     if (cluster.isMaster)
     {
 
-        for (let i = 0; i < cpus; ++i)
-        {
+        // for (let i = 0; i < cpus; ++i)
+        // {
             cluster.fork();
-        }
+        // }
     }
     else
     {
@@ -199,6 +212,7 @@ Promise.all([
         const app = new (require("./lib/DefaultApp"))(worker, pkg, config);
         worker.process.title = `${pkg.name}:${worker.id}`;
         app.start();
+        //Sensors.websocket();
         //console.log("server started " + worker.process.title)
     };
 })

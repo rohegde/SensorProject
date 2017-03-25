@@ -102,11 +102,14 @@
             min: 0,
             max: 100
         },
-        androidXYZ: {
-            redFrom: -1, redTo: 1, redColor: '#00FF00',
-            greenFrom: -5, greenTo: 5, greenColor: '#FF0000',
-            yellowFrom: -2.5, yellowTo: 2.5,
-            minorTicks: 5,
+        AccX: {
+            redFrom: 3,
+            redTo: 5,
+            greenFrom: -5,
+            greenTo: -3,
+            yellowFrom: -3,
+            yellowTo: 2,
+            minorTicks: 3,
             min: -5,
             max: 5
         }
@@ -190,7 +193,7 @@
     }
 
 
-    var wsUri = "ws://localhost:8888";
+    var wsUri = "ws://localhost:8082";
     console.log(wsUri);
     var output;
     var num_sensors = 0;
@@ -254,7 +257,7 @@
     function initWebSocket() {
 
         console.log("inside initWebsocket");
-        websocket = new WebSocket("ws://localhost:8888");
+        websocket = new WebSocket("ws://localhost:8082");
         console.log("websocket created");
         websocket.onopen = function (evt) {
             onOpen(evt)
@@ -272,7 +275,7 @@
 
     function onOpen(evt) {
         writeToScreen("CONNECTED");
-        doSend("WebSocket rocks");
+        doSend("WebSocket connected");
     }
 
     function onClose(evt) {
@@ -298,7 +301,7 @@
     }
 
     function doSend(message) {
-        writeToScreen("SENT: " + message);
+//        writeToScreen("SENT: " + message);
         websocket.send(message);
     }
 

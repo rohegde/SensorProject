@@ -63,3 +63,19 @@ setTimeout(
   },
   9000
 );
+
+const DummySensor = require('./lib/DummySensor');
+let Dummy = new DummySensor({
+    frequency:700
+});
+Dummy.onactivate = event => console.log('Dummy activated');
+Dummy.onchange = event => console.log(
+    `${new Date(event.reading.timestamp)} ${event.reading.dummyValue}`
+);
+Dummy.start();
+setTimeout(
+    () => {
+        Dummy.stop();
+    },
+    7000
+);
