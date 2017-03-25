@@ -1,6 +1,6 @@
 <% include include/header.html %>
 <div id="sensorsContainer">
-    <!-- If Needed Left and Right Padding in 'md' and 'lg' screen means use container class -->
+
 </div>
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -12,7 +12,7 @@
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
     google.charts.load('current', {
-        'packages': ['corechart', 'gauge']
+        'packages': ['corechart']
     });
     google.charts.setOnLoadCallback(init);
 
@@ -20,96 +20,29 @@
     let dataMap = new Map();
     let divMap = new Map();
     let lineDataMap = new Map();
-    let gaugeDataMap = new Map();
     let lineChartMap = new Map();
-    let gaugeChartMap = new Map();
     let lockMap = new Map();
 
     let options_line = {
         legend: 'none',
+        curveType: 'function',
         hAxis: {
             title: 'Time',
             maxValue: 0,
-            minValue: -20,
+            minValue: -10,
             viewWindowMode: 'explicit',
-            gridlines: { count: 10 },
+            gridlines: { count: 6 },
             viewWindow: {
-                min: -20,
+                min: -10,
                 max: 0
             },
 
-            ticks: [{ v: 0, f: 'Now' },
-                { v: -5, f: '5' },
-                { v: -10, f: '10 seconds ago' },
-                { v: -15, f: '15' },
-                { v: -20, f: '20 seconds ago' }]
+        ticks: [{ v: 0, f: 'current' }, { v: -5, f: '5s ago' },{ v: -10, f: '10s ago ' }]
+        },
 
-        },
-        // {
-        //     "position": "top",
-        //     "textStyle": {
-        //         "color": "red",
-        //         "fontSize": "16"
-        //     }
-        // },
-        // width: 400,
-        height: 200
-        // , animation: { duration: 250, startup: true }
-    };
+        height: 250
 
-    var options_gauge = {
-        yih: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        vqY: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        xDM: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        tkw: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        androidXYZ: {
-            redFrom: -1, redTo: 1, redColor: '#00FF00',
-            greenFrom: -5, greenTo: 5, greenColor: '#FF0000',
-            yellowFrom: -2.5, yellowTo: 2.5,
-            minorTicks: 5,
-            min: -5,
-            max: 5
-        }
+
     };
 
 
@@ -118,24 +51,20 @@
         let _id = sensorResponse.UID;
         let _type = sensorResponse.type;
 
-        //init data series
         if (dataMap.get(_id) == undefined)
             dataMap.set(_id, []);
 
-        let gaugeID = "sensor_" + _id + "_gauge";
-        let historyID = "sensor_" + _id + "_history";
 
-        // inject div for chart
-        var t = document.querySelector('#sensorTemplate');
+        let lchartID = "sensor_" + _id + "_lchart";
+
+        var t = document.querySelector('#sensorReadingTemplate');
         var clone = document.importNode(t.content, true);
-        // Populate the src at runtime.
-        clone.querySelector('#sensor_i_gauge').id = gaugeID;
+
         clone.querySelector('#sensorName').textContent = _type;
         clone.querySelector('#sensorID').textContent = sensorResponse.id;
-        clone.querySelector('#sensor_x_history').id = historyID;
+        clone.querySelector('#sensor_x_lchart').id = lchartID;
         document.querySelector('#sensorsContainer').appendChild(clone);
 
-        // prepare data
         let label = undefined;
         let label_unit = sensorResponse.unit;
         switch (sensorResponse.type) {
@@ -161,31 +90,23 @@
                 label = "Unknown ";
         }
 
-        let data_gauge = google.visualization.arrayToDataTable([
-            ['Label', 'Value'],
-            [label, 80],
-        ]);
+
         lockMap.set(_id, true);
 
         let data_line = new google.visualization.DataTable();
         data_line.addColumn('datetime', 'Timestamp');
         data_line.addColumn('number', label_unit);
-        let linechart = new google.visualization.LineChart(document.getElementById(historyID));
+        let linechart = new google.visualization.LineChart(document.getElementById(lchartID));
         linechart.draw(data_line, options_line);
 
-        let gaugechart = new google.visualization.Gauge(document.getElementById(gaugeID));
-
-        gaugeDataMap.set(_id, data_gauge)
         lineDataMap.set(_id, data_line);
-        gaugeChartMap.set(_id, gaugechart)
         lineChartMap.set(_id, linechart);
 
-        google.visualization.events.addListener(gaugechart, 'error', errorHandler);
         google.visualization.events.addListener(linechart, 'error', errorHandler);
         google.visualization.events.addListener(linechart, 'ready', () => lockMap.set(_id, true));
 
 
-        gaugechart.draw(data_line, options_gauge[_id]);
+
 
     }
 
@@ -211,19 +132,8 @@
     }
 
     function updateChart(data) {
-        gaugeDataMap.get(data.UID).setValue(0, 1, data.reading);
-        // lineDataMap.get(data.id).addRows([
-        //     [new Date(data.timestamp), data.reading]
-        // ]);
 
         dataMap.get(data.UID).push([new Date(data.timestamp), data.reading]);
-
-        // let data_line = new google.visualization.DataTable();
-        // data_line.addColumn('datetime', 'Timestamp');
-        // data_line.addColumn('number', label_unit);
-
-
-
 
         if (lockMap.get(data.UID)) {//check if the chart is ready
             let now = new Date();
@@ -244,9 +154,8 @@
 
             options_line.vAxis = { title: data.unit };
 
-            let g_chart = gaugeChartMap.get(data.UID);
+
             let l_chart = lineChartMap.get(data.UID);
-            g_chart.draw(gaugeDataMap.get(data.UID), options_gauge[data.UID]);
             l_chart.draw(data1, options_line);
         }
     }
@@ -272,7 +181,7 @@
 
     function onOpen(evt) {
         writeToScreen("CONNECTED");
-        doSend("WebSocket rocks");
+        doSend("WebSocket Connected");
     }
 
     function onClose(evt) {
