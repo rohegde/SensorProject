@@ -9,12 +9,36 @@
 body {
     padding-top: 70px; /* fixed header */
     font-family: "Open Sans", arial, sans-serif;
+    background-color: #E0E0E0;
 }
 
 main {
     min-height: 30rem;
 }
 
+.jumbotron{
+  /*padding-top: 10px;*/
+  background-color: #FFFFFF;
+  border-color: inherit;
+}
+
+.panel-default{
+  width: 400px;
+  height 180px;
+  font size: 20px;
+  border-color: #000000;
+}
+
+.panel-heading{
+  with: 400 px;
+  height: 30px;
+  color: #000000;
+}
+h3{
+/*padding-left: 50px;*/
+  /*background-color: #2196F3;*/
+  color: #000000;
+}
 footer {
     text-align: center;
 }
