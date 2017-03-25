@@ -37,65 +37,12 @@
                 max: 0
             },
 
-        ticks: [{ v: 0, f: 'current' }, { v: -5, f: '5s ago' },{ v: -10, f: '10s ago ' }]
+            ticks: [{ v: 0, f: 'current' }, { v: -5, f: '5s ago' },{ v: -10, f: '10s ago ' }]
         },
 
-    var options_gauge = {
-        yih: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        vqY: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        xDM: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        tkw: {
-            redFrom: 70,
-            redTo: 100,
-            yellowFrom: 40,
-            yellowTo: 70,
-            greenFrom: 0,
-            greenTo: 40,
-            minorTicks: 5,
-            min: 0,
-            max: 100
-        },
-        AccX: {
-            redFrom: 3,
-            redTo: 5,
-            greenFrom: -5,
-            greenTo: -3,
-            yellowFrom: -3,
-            yellowTo: 2,
-            minorTicks: 3,
-            min: -5,
-            max: 5
-        }
+        height: 250
+
+
     };
 
 
@@ -191,7 +138,7 @@
         if (lockMap.get(data.UID)) {//check if the chart is ready
             let now = new Date();
             let newData = dataMap.get(data.UID).
-                filter(i => (now - i[0]) < 20000).
+            filter(i => (now - i[0]) < 20000).
             map(i => [-1 * (now - i[0]) / 1000, i[1]]);
             // newData.unshift(["Timestamp", "Units"]);
 
@@ -260,7 +207,7 @@
     }
 
     function doSend(message) {
-//        writeToScreen("SENT: " + message);
+        writeToScreen("SENT: " + message);
         websocket.send(message);
     }
 

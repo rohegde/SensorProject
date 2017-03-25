@@ -22,11 +22,14 @@ main {
   border-color: inherit;
 }
 
-.panel-default{
+.panel-primary{
   width: 400px;
-  height 180px;
-  font size: 20px;
+  height: 180px;
+  font-size: 15px;
   border-color: #000000;
+}
+.panel-default{
+    width: 800px;
 }
 
 .panel-heading{
