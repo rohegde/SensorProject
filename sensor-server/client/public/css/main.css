@@ -30,6 +30,8 @@ main {
 }
 .panel-default{
     width: 800px;
+    height:200px;
+    overflow-y:scroll;
 }
 
 .panel-heading{

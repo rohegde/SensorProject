@@ -4,14 +4,12 @@ module.exports = class DefaultRouter extends require("express").Router
 {
     constructor(opts)
     {
+
         super(opts || DefaultRouter.defaultOptions());
         this.use("/", DefaultRouter.xPoweredBy, DefaultRouter.logSession, DefaultRouter.allowOnlyGetMethod);
         this.get("/", require("./routes/index"));
         this.get("/index", require("./routes/index"));
         this.get("/index.html", require("./routes/index"));
-        // this.get("/index", require("./routes/dashboard"));
-        // this.get("/index.html", require("./routes/dashboard"));
-        // this.get("/index.html", require("./routes/dashboard"));
         this.get("/system.html", require("./routes/system"));
         this.get("/license.html", require("./routes/license"));
         this.get("/error.html", require("./routes/error"));

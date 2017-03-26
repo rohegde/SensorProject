@@ -150,6 +150,17 @@ module.exports = class Sensors
     {
 
       let sensor = request.app.locals.sensors.sensorsmap.get(request.params.sensor);
+        if (sensor == undefined) {
+            response.format({
+                "application/json": () => {
+                    response.status(404).type("application/json").send({ "error": "Sensor doesn't exist!" });
+                },
+                "default": () => {
+                    next(new httpError.NotFound());
+                }
+            });
+            return;
+        }
       let sensorResponse = {
           id: sensor.id,
           reading: sensor.lastReading.reading

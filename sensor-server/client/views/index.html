@@ -6,7 +6,7 @@
     <div class="panel-heading">
         <h4>Log</h4>
     </div>
-    <div class="panel-body" id="output" style="height:200px;overflow-y:scroll"></div>
+    <div class="panel-body" id="output" ></div>
 </div>
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -18,35 +18,32 @@
 
 
     let dataMap = new Map();
-    let divMap = new Map();
     let lineDataMap = new Map();
     let lineChartMap = new Map();
-    let lockMap = new Map();
+    let checkIDMap = new Map();
 
     let options_line = {
         legend: 'none',
         curveType: 'function',
         hAxis: {
             title: 'Time',
-            maxValue: 0,
-            minValue: -10,
+            maxValue: 20,
+            minValue: 0,
             viewWindowMode: 'explicit',
             gridlines: { count: 6 },
             viewWindow: {
-                min: -10,
-                max: 0
+                min: 0,
+                max: 20
             },
 
-            ticks: [{ v: 0, f: 'current' }, { v: -5, f: '5s ago' },{ v: -10, f: '10s ago ' }]
+            ticks: [{ v: 0, f: 'current' }, { v: 5, f: '5s ago' },{ v: 10, f: '10s ago ' },{ v: 15, f: '15s ago' },{ v: 20, f: '20s ago ' }]
         },
 
         height: 250
-
-
     };
 
 
-    function initSensor(sensorResponse) {
+    function initializeSensors(sensorResponse) {
         //console.log(sensorResponse);
         let _id = sensorResponse.UID;
         let _type = sensorResponse.type;
@@ -58,52 +55,29 @@
         let lchartID = "sensor_" + _id + "_lchart";
 
         var t = document.querySelector('#sensorReadingTemplate');
-        var clone = document.importNode(t.content, true);
+        var create = document.importNode(t.content, true);
 
-        clone.querySelector('#sensorName').textContent = _type;
-        clone.querySelector('#sensorID').textContent = sensorResponse.id;
-        clone.querySelector('#sensor_x_lchart').id = lchartID;
-        document.querySelector('#sensorsContainer').appendChild(clone);
+        create.querySelector('#sensorType').textContent = _type;
+        create.querySelector('#sensorID').textContent = sensorResponse.id;
+        create.querySelector('#sensor_x_lchart').id = lchartID;
+        document.querySelector('#sensorsContainer').appendChild(create);
 
-        let label = undefined;
-        let label_unit = sensorResponse.unit;
-        switch (sensorResponse.type) {
-            case 'Temperature Sensor':
-                label = "Temperature";
-                break;
-            case 'Ambient Sensor':
-                label = "Light";
-                break;
-            case 'Humidity Sensor':
-                label = "Humidity";
-                break;
-            case 'Sound Intensity Sensor':
-                label = "Sound";
-                break;
-            case 'Accelerometer Sensor':
-                label = "Accelerometer";
-                break;
-            case 'Accelerometer':
-                label = "x-inertia";
-                break;
-            default:
-                label = "Unknown ";
-        }
+        let unit = sensorResponse.unit;
 
 
-        lockMap.set(_id, true);
+        checkIDMap.set(_id, true);
 
-        let data_line = new google.visualization.DataTable();
-        data_line.addColumn('datetime', 'Timestamp');
-        data_line.addColumn('number', label_unit);
+        let lineChartData = new google.visualization.DataTable();
+        lineChartData.addColumn('datetime', 'Timestamp');
+        lineChartData.addColumn('number', unit);
         let linechart = new google.visualization.LineChart(document.getElementById(lchartID));
-        linechart.draw(data_line, options_line);
+        linechart.draw(lineChartData, options_line);
 
-        lineDataMap.set(_id, data_line);
+        lineDataMap.set(_id, lineChartData);
         lineChartMap.set(_id, linechart);
 
         google.visualization.events.addListener(linechart, 'error', errorHandler);
-        google.visualization.events.addListener(linechart, 'ready', () => lockMap.set(_id, true));
+        google.visualization.events.addListener(linechart, 'ready', () => checkIDMap.set(_id, true));
 
 
 
@@ -120,32 +94,30 @@
     function init() {
         output = document.getElementById("output");
         console.log("inside ws received");
-        initWebSocket();
+        clientWebSocket();
 
     }
 
     function errorHandler(error) {
         console.log(JSON.stringify(error));
         google.visualization.errors.removeError(error.UID);
-        // console.log("ERROR: " + error.message + " :: " + error.detailedMessage + " :: " + JSON.stringify(error.options))
         google.visualization.errors.addError(output, error.message, error.detailedMessage, error.options);
     }
 
-    function updateChart(data) {
+    function dynamicChart(data) {
 
         dataMap.get(data.UID).push([new Date(data.timestamp), data.reading]);
 
-        if (lockMap.get(data.UID)) {//check if the chart is ready
-            let now = new Date();
-            let newData = dataMap.get(data.UID).
-            filter(i => (now - i[0]) < 20000).
-            map(i => [-1 * (now - i[0]) / 1000, i[1]]);
-            // newData.unshift(["Timestamp", "Units"]);
+        if (checkIDMap.get(data.UID)) {//check if the chart is ready
+            let current = new Date();
+            let currentData = dataMap.get(data.UID).
+            filter(i => (current - i[0]) < 20000).
+            map(i => [(current - i[0]) / 1000, i[1]]);
 
             let data1 = new google.visualization.DataTable();
             data1.addColumn('number', 'Seconds ago');
             data1.addColumn('number', data.unit);
-            data1.addRows(newData);
+            data1.addRows(currentData);
 
             var formatter = new google.visualization.NumberFormat({ suffix: ' secs' });
             var unitFormatter = new google.visualization.NumberFormat({ suffix: data.unit });
@@ -160,58 +132,41 @@
         }
     }
 
-    function initWebSocket() {
+    function clientWebSocket() {
 
         console.log("inside initWebsocket");
         websocket = new WebSocket("ws://localhost:8082");
         console.log("websocket created");
         websocket.onopen = function (evt) {
-            onOpen(evt)
+            outputToScreen("CONNECTED");
+            doSend("WebSocket Connected");
         };
         websocket.onclose = function (evt) {
-            onClose(evt)
+            outputToScreen("DISCONNECTED");
         };
         websocket.onmessage = function (evt) {
-            onMessage(evt)
+            console.log("inside Message received");
+            dataRec = evt.data;
+            dataRec_parsed = JSON.parse(evt.data);
+            if (dataMap.get(dataRec_parsed.UID) == undefined) {
+                console.log("Not found! ");
+                initializeSensors(dataRec_parsed);
+            }
+
+            dynamicChart(dataRec_parsed);
+            outputToScreen(dataRec);
         };
         websocket.onerror = function (evt) {
-            onError(evt)
+            outputToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
         };
-    }
-
-    function onOpen(evt) {
-        writeToScreen("CONNECTED");
-        doSend("WebSocket Connected");
-    }
-
-    function onClose(evt) {
-        writeToScreen("DISCONNECTED");
-    }
-
-    function onMessage(evt) {
-        console.log("inside Message received");
-        dataRec = evt.data;
-        dataRec_parsed = JSON.parse(evt.data);
-        if (dataMap.get(dataRec_parsed.UID) == undefined) {
-            // dataMap.set(dataRec.id, []);
-            console.log("Not found! ");
-            initSensor(dataRec_parsed);
-        }
-
-        updateChart(dataRec_parsed);
-        writeToScreen(dataRec);
-    }
-
-    function onError(evt) {
-        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
     }
 
     function doSend(message) {
-        writeToScreen("SENT: " + message);
+        outputToScreen("SENT: " + message);
         websocket.send(message);
     }
 
-    function writeToScreen(message) {
+    function outputToScreen(message) {
         var pre = document.createElement("code");
         let output = document.getElementById("output")
         pre.style.wordWrap = "break-word";
@@ -219,7 +174,34 @@
         output.appendChild(pre);
         output.scrollTop = output.scrollHeight;
     }
-
-    // window.addEventListener("load", init, false);
 </script>
+<template id="sensorReadingTemplate">
+    <div class="jumbotron">
+        <div class="row">
+            <div class="col-md-6 column">
+                <div class="panel panel-primary">
+                    <div class="panel-heading"> <h3>Sensor Readings</h3></div>
+                    <div class="panel-body">
+                        <table>
+                            <tr>
+                                <th>Name:</th>
+                                <td id="sensorType"></td>
+                            </tr>
+
+                            <tr>
+                                <th>ID:</th>
+                                <td id="sensorID"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 column-chart">
+                <h3>Line Chart for Sensor Reading</h3>
+
+                <div id="sensor_x_lchart"></div>
+            </div>
+        </div>
+    </div>
+</template>
 <% include include/footer.html %>

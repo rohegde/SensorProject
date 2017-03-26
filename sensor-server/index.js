@@ -6,23 +6,10 @@ const path = require("path");
 const config = require(path.join(__dirname, "config", "start.json"));
 const pkg = require(path.join(__dirname, "package.json"));
 const debug = require("util").debuglog(pkg.name);
-const WebSocket = require('ws');
-// const wss = new WebSocket.Server({
-//     port: 8082
-// });
-// wss.broadcast = function broadcast(data) {
-//     wss.clients.forEach(function each(client) {
-//         if (client.readyState === WebSocket.OPEN) {
-//             // console.log(data);
-//             client.send(JSON.stringify(data));
-//         }
-//     })
-// };
 
 process.title = pkg.name;
 config.basedir = __dirname;
 
-// config.webss = wss;
 
 
 const ambientLightSensor = require("tinkerForge-sensor").AmbientLightSensor;
@@ -42,18 +29,7 @@ ambientsensor.onchange = event => {
     ambientsensor.reading = event.reading;
     ambientsensor.lastReading = event;
 }
-// ambientsensor.onchange = event => {
-//     let sensorResponse = {
-//         id: ambientsensor.id,
-//         type: ambientsensor.type,
-//         reading: event.value,
-//         timestamp: event.timestamp,
-//         unit: ambientsensor.unit
-//     };
-//
-//     wss.broadcast(sensorResponse);
-//     ambientsensor.lastReading = event;
-// }
+
 
 let humiditysensor = new humiditySensor({
     frequency: 2000,
@@ -67,18 +43,7 @@ humiditysensor.onchange = event => {
     humiditysensor.reading = event.reading;
     humiditysensor.lastReading = event;
 }
-// humiditysensor.onchange = event => {
-//     let sensorResponse = {
-//         id: humiditysensor.id,
-//         type: humiditysensor.type,
-//         reading: event.value,
-//         timestamp: event.timestamp,
-//         unit: humiditysensor.unit
-//     };
-//
-//     wss.broadcast(sensorResponse);
-//     humiditysensor.lastReading = event;
-// }
+
 
 let soundintensitysensor = new soundIntensitySensor({
     frequency: 2000,
@@ -91,18 +56,7 @@ soundintensitysensor.onchange = event => {
     soundintensitysensor.reading = event.reading;
     soundintensitysensor.lastReading = event;
 }
-// soundintensitysensor.onchange = event => {
-//     let sensorResponse = {
-//         id: soundintensitysensor.id,
-//         type: soundintensitysensor.type,
-//         reading: event.value,
-//         timestamp: event.timestamp,
-//         unit: soundintensitysensor.unit
-//     };
-//
-//     wss.broadcast(sensorResponse);
-//     soundintensitysensor.lastReading = event;
-// }
+
 
 
 let tempraturesensor = new tempratureSensor({
@@ -116,18 +70,7 @@ tempraturesensor.onchange = event => {
     tempraturesensor.reading = event.reading;
     tempraturesensor.lastReading = event;
 }
-// tempraturesensor.onchange = event => {
-//     let sensorResponse = {
-//         id: tempraturesensor.id,
-//         type: tempraturesensor.type,
-//         reading: event.value,
-//         timestamp: event.timestamp,
-//         unit: tempraturesensor.unit
-//     };
-//
-//     wss.broadcast(sensorResponse);
-//     tempraturesensor.lastReading = event;
-// }
+
 
 let sensorsmap = new Map();
 sensorsmap.set(ambientsensor.id, ambientsensor);
@@ -212,7 +155,6 @@ Promise.all([
         const app = new (require("./lib/DefaultApp"))(worker, pkg, config);
         worker.process.title = `${pkg.name}:${worker.id}`;
         app.start();
-        //Sensors.websocket();
         //console.log("server started " + worker.process.title)
     };
 })
