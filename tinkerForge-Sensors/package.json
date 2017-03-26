@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {},
   "dependencies": {
-    "generic-sensor-api": "file:../generic-sensor-api/"
+    "generic-sensor-api": "1.0.0"
   },
   "devDependencies": {
     "gulp": "^3.9.1",

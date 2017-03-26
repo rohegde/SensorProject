@@ -1,2 +1,10 @@
 
 \.idea/
+
+tinkerForge-Sensors/node_modules/
+
+sensor-server/node_modules/
+
+dummy-sensor/node_modules/
+
+generic-sensor-api/node_modules/
